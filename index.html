@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minion 3D Chess</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1a2e;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  user-select: none;
+}
+canvas { display: block; }
+#ui {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+#turn-indicator {
+  background: rgba(0,0,0,0.65);
+  color: #e8e8e8;
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+#status {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffd700;
+  background: rgba(0,0,0,0.5);
+  padding: 5px 18px;
+  border-radius: 6px;
+  display: none;
+  backdrop-filter: blur(4px);
+}
+#status.visible { display: inline-block; }
+#clock {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 14px;
+  color: #aaa;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 14px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+#promotion-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 20, 45, 0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 28px 32px;
+  text-align: center;
+  display: none;
+  z-index: 20;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+}
+#promotion-dialog.visible { display: block; }
+#promotion-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  z-index: 19;
+  backdrop-filter: blur(2px);
+}
+#promotion-backdrop.visible { display: block; }
+#promotion-dialog h3 {
+  color: #e0e0e0;
+  margin-bottom: 18px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.promotion-buttons {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+.promotion-btn {
+  width: 64px;
+  height: 64px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  font-size: 32px;
+  line-height: 64px;
+  transition: all 0.18s ease;
+  color: #e0e0e0;
+}
+.promotion-btn:hover {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.12);
+  transform: scale(1.08);
+}
+#restart-btn {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 30px;
+  background: rgba(0,0,0,0.55);
+  color: #ccc;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(4px);
+  transition: all 0.18s ease;
+  z-index: 10;
+}
+#restart-btn:hover {
+  background: rgba(60, 60, 100, 0.7);
+  border-color: rgba(255,215,0,0.4);
+  color: #fff;
+}
+#controls-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.5);
+  color: #aaa;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 36px;
+  text-align: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  transition: all 0.18s ease;
+}
+#controls-btn:hover {
+  background: rgba(60,60,100,0.7);
+  border-color: rgba(255,215,0,0.4);
+  color: #fff;
+}
+#theme-btn {
+  position: absolute;
+  top: 64px;
+  right: 20px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.5);
+  color: #aaa;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 36px;
+  text-align: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  transition: all 0.18s ease;
+}
+#theme-btn:hover {
+  background: rgba(60,60,100,0.7);
+  border-color: rgba(255,215,0,0.4);
+  color: #fff;
+}
+#controls-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,25,0.85);
+  z-index: 30;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(8px);
+}
+#controls-overlay.visible { display: flex; }
+#controls-box {
+  background: rgba(20,20,45,0.95);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 32px 40px;
+  max-width: 400px;
+  color: #d0d0d0;
+  line-height: 1.8;
+  font-size: 15px;
+}
+#controls-box h2 {
+  color: #e8e8e8;
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+#controls-box kbd {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #ffd700;
+  font-family: inherit;
+}
+#controls-box .close-btn {
+  margin-top: 20px;
+  padding: 8px 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.18s ease;
+}
+#controls-box .close-btn:hover {
+  background: rgba(60,60,100,0.7);
+  border-color: rgba(255,215,0,0.4);
+  color: #fff;
+}
+#move-log {
+  position: absolute;
+  top: 100px;
+  left: 20px;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+#move-log .entry {
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 4px 16px;
+  font-size: 13px;
+  color: #b0b0b0;
+  white-space: nowrap;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  letter-spacing: 0.2px;
+  transition: all 0.2s ease;
+}
+#move-log .entry .time {
+  color: #888;
+  margin-right: 10px;
+}
+#move-log .entry .color-tag {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+#move-log .entry .color-tag.white { background: #f0ece4; border: 1px solid rgba(255,255,255,0.2); }
+#move-log .entry .color-tag.black { background: #222; border: 1px solid rgba(255,255,255,0.15); }
+#mode-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,25,0.9);
+  z-index: 40;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+#mode-overlay.hidden { display: none; }
+#mode-box {
+  background: rgba(20,20,45,0.96);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 40px 48px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+#mode-box h1 { color: #e8e8e8; font-size: 26px; margin-bottom: 6px; }
+#mode-box .subtitle { color: #888; font-size: 14px; margin-bottom: 28px; }
+.mode-section { margin-bottom: 20px; }
+.mode-section h3 { color: #aaa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.mode-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.mode-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #d0d0d0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+  min-width: 100px;
+}
+.mode-btn:hover {
+  border-color: #ffd700;
+  background: rgba(255,215,0,0.12);
+  color: #fff;
+  transform: scale(1.05);
+}
+#name-section { margin-bottom: 20px; }
+#name-section h3 { color: #aaa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+#name-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: #e0e0e0;
+  font-size: 15px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.18s ease;
+  box-sizing: border-box;
+}
+#name-input:focus { border-color: #ffd700; }
+#name-input::placeholder { color: #666; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div id="turn-indicator">White's Turn</div>
+  <div id="status"></div>
+  <div id="clock">00:00</div>
+</div>
+<div id="move-log"></div>
+<div id="promotion-backdrop"></div>
+<div id="promotion-dialog">
+  <h3>Promote Pawn</h3>
+  <div class="promotion-buttons">
+    <button class="promotion-btn" data-piece="queen">♛</button>
+    <button class="promotion-btn" data-piece="rook">♜</button>
+    <button class="promotion-btn" data-piece="bishop">♝</button>
+    <button class="promotion-btn" data-piece="knight">♞</button>
+  </div>
+</div>
+<button id="restart-btn">New Game</button>
+<button id="controls-btn">?</button>
+<button id="theme-btn">🎨</button>
+<div id="controls-overlay">
+  <div id="controls-box">
+    <h2>Controls</h2>
+    <p><kbd>Left-click</kbd> piece to select &amp; move</p>
+    <p><kbd>Arrow keys</kbd> navigate board</p>
+    <p><kbd>Enter</kbd> select / confirm move</p>
+    <p><kbd>Esc</kbd> cancel selection</p>
+    <p><kbd>Drag</kbd> to orbit</p>
+    <p><kbd>Scroll</kbd> to zoom</p>
+    <p><kbd>Right-drag</kbd> to pan</p>
+    <button class="close-btn" id="controls-close">Got it</button>
+  </div>
+</div>
+<div id="mode-overlay">
+  <div id="mode-box">
+    <h1>Minion 3D Chess</h1>
+    <p class="subtitle">Select game mode</p>
+    <div class="mode-section">
+      <h3>Play against</h3>
+      <div class="mode-btns">
+        <button class="mode-btn" data-mode="2player">Two Player</button>
+        <button class="mode-btn" data-mode="easy">Easy AI</button>
+        <button class="mode-btn" data-mode="medium">Medium AI</button>
+        <button class="mode-btn" data-mode="hard">Hard AI</button>
+      </div>
+    </div>
+    <div id="name-section">
+      <h3>Your name</h3>
+      <input id="name-input" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off">
+    </div>
+  </div>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="main.js?v=5"></script>
+</body>
+</html>

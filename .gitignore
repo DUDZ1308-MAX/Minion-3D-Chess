@@ -1,0 +1,10 @@
+# Server launch scripts (not needed on GitHub Pages)
+*.bat
+*.vbs
+*.ps1
+server.js
+run.sh
+
+# OS files
+Thumbs.db
+.DS_Store
