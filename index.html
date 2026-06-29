@@ -577,8 +577,30 @@ canvas { display: block; }
       <h3>Your name</h3>
       <input id="name-input" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off">
     </div>
+    <div class="mode-section" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:16px">
+      <h3>Online</h3>
+      <div class="mode-btns">
+        <button class="mode-btn" data-mode="host">Host Game</button>
+        <button class="mode-btn" data-mode="join">Join Game</button>
+      </div>
+      <div id="online-host-area" style="display:none;margin-top:12px">
+        <p style="color:#aaa;font-size:13px">Share this code:</p>
+        <p id="room-code" style="color:#ffd700;font-size:22px;font-weight:700;letter-spacing:3px;font-family:'SF Mono',monospace;margin:6px 0"></p>
+        <p id="online-status" style="color:#888;font-size:12px">Waiting for opponent...</p>
+        <button id="online-cancel-btn" class="mode-btn" style="margin-top:8px;padding:6px 16px;font-size:12px">Cancel</button>
+      </div>
+      <div id="online-join-area" style="display:none;margin-top:12px">
+        <input id="room-code-input" type="text" placeholder="Enter room code" maxlength="20" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;color:#e0e0e0;font-size:14px;width:180px;outline:none;text-align:center;letter-spacing:2px;font-family:'SF Mono',monospace;text-transform:uppercase;box-sizing:border-box">
+        <div style="margin-top:8px;display:flex;gap:8px;justify-content:center">
+          <button id="online-connect-btn" class="mode-btn" style="padding:6px 16px;font-size:12px">Connect</button>
+          <button id="online-join-cancel-btn" class="mode-btn" style="padding:6px 16px;font-size:12px">Cancel</button>
+        </div>
+        <p id="online-join-status" style="color:#888;font-size:12px;margin-top:6px"></p>
+      </div>
+    </div>
   </div>
 </div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script type="importmap">
 {
   "imports": {
@@ -587,6 +609,6 @@ canvas { display: block; }
   }
 }
 </script>
-<script type="module" src="main.js?v=5"></script>
+<script type="module" src="main.js?v=6"></script>
 </body>
 </html>

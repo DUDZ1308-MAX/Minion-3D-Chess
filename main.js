@@ -1,6 +1,7 @@
 import { ChessGame } from './chess-logic.js';
-import { Chess3DRenderer } from './chess-3d.js?v=5';
-import { getAIMove } from './chess-ai.js?v=5';
+import { Chess3DRenderer } from './chess-3d.js?v=6';
+import { getAIMove } from './chess-ai.js?v=6';
+import { OnlineGame } from './chess-online.js?v=6';
 
 const game = new ChessGame();
 let renderer;
@@ -17,6 +18,8 @@ let clockInterval = null;
 let gameMode = '2player';
 let aiThinking = false;
 let playerName = '';
+let onlineGame = null;
+let isRemoteMove = false;
 
 const PIECE_SYMBOLS = {
   pawn: { white: '♙', black: '♟' },
@@ -116,8 +119,26 @@ function triggerAI() {
   }, 200);
 }
 
+function sendLocalMove() {
+  if (!onlineGame?.isConnected) return;
+  const last = game.moveHistory[game.moveHistory.length - 1];
+  if (!last) return;
+  const isPromotion = last.piece.type === 'pawn' && (last.to.row === 0 || last.to.row === 7);
+  onlineGame.sendMove({
+    from: { col: last.from.col, row: last.from.row },
+    to: { col: last.to.col, row: last.to.row },
+    promotion: isPromotion ? 'queen' : null
+  });
+}
+
 function onMoveDone() {
   if (game.gameOver) return;
+  if (onlineGame?.isConnected) {
+    sendLocalMove();
+    renderer.inputEnabled = false;
+    turnIndicator.textContent = 'Waiting for opponent...';
+    return;
+  }
   if (gameMode !== '2player' && game.turn === 'black') {
     triggerAI();
   }
@@ -151,6 +172,10 @@ function isModeAllowed(mode) {
   return true;
 }
 
+function isOnlineMode() {
+  return gameMode === 'online-host' || gameMode === 'online-join';
+}
+
 function startGame() {
   game.reset();
   renderer.resetState();
@@ -163,7 +188,7 @@ function startGame() {
   clearMoveLog();
   updateUI({});
   aiThinking = false;
-  if (gameMode !== '2player' && game.turn === 'black') {
+  if (!isOnlineMode() && gameMode !== '2player' && game.turn === 'black') {
     triggerAI();
   }
 }
@@ -233,13 +258,100 @@ document.querySelectorAll('.promotion-btn').forEach(btn => {
   });
 });
 
+function cancelOnline() {
+  if (onlineGame) {
+    onlineGame.disconnect();
+    onlineGame = null;
+  }
+  document.getElementById('online-host-area').style.display = 'none';
+  document.getElementById('online-join-area').style.display = 'none';
+  document.getElementById('online-join-status').textContent = '';
+}
+
+function startOnlineGame(isHost) {
+  document.getElementById('mode-overlay').className = 'hidden';
+  gameMode = isHost ? 'online-host' : 'online-join';
+  startGame();
+  if (!isHost) {
+    renderer.inputEnabled = false;
+    turnIndicator.textContent = 'Waiting for host...';
+  }
+}
+
+function handleRemoteMove(data) {
+  isRemoteMove = true;
+  const fromRow = data.from.row, fromCol = data.from.col;
+  const toRow = data.to.row, toCol = data.to.col;
+  const piece = game.board[fromRow][fromCol];
+  if (!piece) { isRemoteMove = false; return; }
+  game.movePiece({ fromRow, fromCol, toRow, toCol });
+  if (data.promotion) {
+    const p = game.board[toRow][toCol];
+    if (p && p.type === 'pawn') {
+      p.type = data.promotion;
+    }
+  }
+  game.inCheck = game.isInCheck(game.turn);
+  if (game.isCheckmate(game.turn)) {
+    game.gameOver = true; game.result = 'checkmate';
+  } else if (game.isStalemate(game.turn)) {
+    game.gameOver = true; game.result = 'stalemate';
+  }
+  renderer.updatePieces();
+  renderer.highlightMoves([]);
+  logLastMove();
+  updateUI({});
+  renderer.inputEnabled = true;
+  isRemoteMove = false;
+}
+
+function handleOnlineDisconnect() {
+  turnIndicator.textContent = 'Connection lost!';
+  statusEl.textContent = 'Opponent disconnected';
+  statusEl.className = 'visible';
+  renderer.inputEnabled = false;
+  if (onlineGame) {
+    onlineGame.disconnect();
+    onlineGame = null;
+  }
+}
+
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const mode = btn.dataset.mode;
+    if (mode === 'host') {
+      document.getElementById('online-host-area').style.display = 'block';
+      document.getElementById('online-join-area').style.display = 'none';
+      document.getElementById('online-join-status').textContent = '';
+      document.getElementById('room-code').textContent = '...';
+      document.getElementById('online-status').textContent = 'Initializing...';
+      cancelOnline();
+      onlineGame = new OnlineGame(game, {
+        onConnect() {
+          document.getElementById('online-status').textContent = 'Connected! Starting game...';
+          setTimeout(() => startOnlineGame(true), 500);
+        },
+        onRemoteMove(data) { handleRemoteMove(data); },
+        onDisconnect() { handleOnlineDisconnect(); }
+      });
+      onlineGame.host().then(id => {
+        document.getElementById('room-code').textContent = id;
+        document.getElementById('online-status').textContent = 'Waiting for opponent...';
+      }).catch(() => {
+        document.getElementById('online-status').textContent = 'Failed to create game. Try again.';
+      });
+      return;
+    }
+    if (mode === 'join') {
+      document.getElementById('online-join-area').style.display = 'block';
+      document.getElementById('online-host-area').style.display = 'none';
+      return;
+    }
     if (!isModeAllowed(mode)) {
       document.getElementById('premium-overlay').classList.add('visible');
       return;
     }
+    cancelOnline();
     gameMode = mode;
     const input = document.getElementById('name-input');
     playerName = input.value.trim();
@@ -248,7 +360,41 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
   });
 });
 
+document.getElementById('online-cancel-btn').addEventListener('click', () => {
+  cancelOnline();
+});
+
+document.getElementById('online-connect-btn').addEventListener('click', () => {
+  const code = document.getElementById('room-code-input').value.trim();
+  if (!code) return;
+  document.getElementById('online-join-status').textContent = 'Connecting...';
+  cancelOnline();
+  onlineGame = new OnlineGame(game, {
+    onConnect() {
+      document.getElementById('online-join-status').textContent = '';
+      document.getElementById('room-code-input').value = '';
+      setTimeout(() => startOnlineGame(false), 500);
+    },
+    onRemoteMove(data) { handleRemoteMove(data); },
+    onDisconnect() { handleOnlineDisconnect(); }
+  });
+  onlineGame.join(code).catch(() => {
+    document.getElementById('online-join-status').textContent = 'Connection failed. Check the code.';
+    cancelOnline();
+  });
+});
+
+document.getElementById('online-join-cancel-btn').addEventListener('click', () => {
+  cancelOnline();
+  document.getElementById('room-code-input').value = '';
+});
+
+document.getElementById('room-code-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('online-connect-btn').click();
+});
+
 document.getElementById('restart-btn').addEventListener('click', () => {
+  cancelOnline();
   document.getElementById('mode-overlay').className = '';
 });
 
