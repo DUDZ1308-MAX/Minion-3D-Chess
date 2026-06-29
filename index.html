@@ -336,6 +336,165 @@ canvas { display: block; }
 }
 #name-input:focus { border-color: #ffd700; }
 #name-input::placeholder { color: #666; }
+#premium-btn {
+  position: absolute;
+  top: 108px;
+  right: 20px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,215,0,0.25);
+  background: rgba(255,215,0,0.1);
+  color: #ffd700;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 36px;
+  text-align: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  transition: all 0.18s ease;
+}
+#premium-btn:hover {
+  background: rgba(255,215,0,0.2);
+  border-color: #ffd700;
+  box-shadow: 0 0 16px rgba(255,215,0,0.15);
+}
+#premium-btn.active {
+  background: rgba(255,215,0,0.2);
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255,215,0,0.1);
+}
+#premium-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,25,0.88);
+  z-index: 35;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+#premium-overlay.visible { display: flex; }
+#premium-box {
+  background: rgba(20,20,45,0.97);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 20px;
+  padding: 36px 40px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+#premium-box h2 { color: #ffd700; font-size: 22px; margin-bottom: 6px; }
+#premium-box .subtitle { color: #999; font-size: 13px; margin-bottom: 20px; }
+.premium-features { text-align: left; margin: 0 auto 20px; max-width: 300px; }
+.premium-features li { color: #ccc; font-size: 14px; line-height: 2; list-style: none; }
+.premium-features li::before { content: '✦ '; color: #ffd700; }
+.premium-features li.free::before { content: '✓ '; color: #4caf50; }
+#premium-unlock-btn {
+  padding: 12px 32px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #1a1a2e;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+#premium-unlock-btn:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(255,215,0,0.3); }
+.premium-code-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); }
+.premium-code-section p { color: #888; font-size: 12px; margin-bottom: 8px; }
+.premium-code-row { display: flex; gap: 8px; justify-content: center; }
+#premium-code-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e0e0e0;
+  font-size: 14px;
+  width: 180px;
+  outline: none;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+#premium-code-input:focus { border-color: #ffd700; }
+#premium-code-input::placeholder { color: #555; }
+#premium-activate-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,215,0,0.3);
+  background: rgba(255,215,0,0.1);
+  color: #ffd700;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+#premium-activate-btn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+#premium-close {
+  margin-top: 16px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: #999;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.18s ease;
+}
+#premium-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
+#premium-status {
+  margin-top: 8px;
+  font-size: 13px;
+  min-height: 20px;
+}
+#premium-status.active { color: #ffd700; }
+#premium-status.error { color: #ff6b6b; }
+#bmc-btn {
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.5);
+  color: #ddd;
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: none;
+  backdrop-filter: blur(4px);
+  transition: all 0.18s ease;
+}
+#bmc-btn:hover { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.3); color: #ffd700; }
+#bmc-btn img { width: 16px; height: 16px; }
+#ad-banner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px;
+  min-height: 50px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+#ad-banner.hidden { display: none; }
+#ad-banner .ad-label {
+  color: #666;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
 </style>
 </head>
 <body>
@@ -358,6 +517,36 @@ canvas { display: block; }
 <button id="restart-btn">New Game</button>
 <button id="controls-btn">?</button>
 <button id="theme-btn">🎨</button>
+<button id="premium-btn">★</button>
+<div id="premium-overlay">
+  <div id="premium-box">
+    <h2>★ Premium</h2>
+    <p class="subtitle">Unlock the full experience</p>
+    <ul class="premium-features">
+      <li class="free">4 free themes</li>
+      <li>All 12 themes (4 exclusive premium themes)</li>
+      <li>Hard AI difficulty</li>
+      <li>Ad-free experience</li>
+      <li>Support development</li>
+    </ul>
+    <button id="premium-unlock-btn">☕ Get Premium</button>
+    <div class="premium-code-section">
+      <p>Already a supporter? Enter your code</p>
+      <div class="premium-code-row">
+        <input id="premium-code-input" type="text" placeholder="CHESS3D-PRO-XXXX" maxlength="24">
+        <button id="premium-activate-btn">Activate</button>
+      </div>
+    </div>
+    <div id="premium-status"></div>
+    <button id="premium-close">Close</button>
+  </div>
+</div>
+<a id="bmc-btn" href="https://buymeacoffee.com/dudz1308" target="_blank" rel="noopener">
+  ☕ Buy me a coffee
+</a>
+<div id="ad-banner">
+  <span class="ad-label">— ad —</span>
+</div>
 <div id="controls-overlay">
   <div id="controls-box">
     <h2>Controls</h2>

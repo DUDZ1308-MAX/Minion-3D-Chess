@@ -123,6 +123,34 @@ function onMoveDone() {
   }
 }
 
+function isPremium() {
+  return localStorage.getItem('chess3d_premium') === 'true';
+}
+
+function setPremium(val) {
+  if (val) {
+    localStorage.setItem('chess3d_premium', 'true');
+  } else {
+    localStorage.removeItem('chess3d_premium');
+  }
+  updatePremiumUI();
+}
+
+function updatePremiumUI() {
+  const premium = isPremium();
+  const btn = document.getElementById('premium-btn');
+  const banner = document.getElementById('ad-banner');
+  btn.classList.toggle('active', premium);
+  if (premium) {
+    banner.classList.add('hidden');
+  }
+}
+
+function isModeAllowed(mode) {
+  if (mode === 'hard' && !isPremium()) return false;
+  return true;
+}
+
 function startGame() {
   game.reset();
   renderer.resetState();
@@ -179,6 +207,7 @@ function init() {
   if (clockInterval) clearInterval(clockInterval);
   clockInterval = setInterval(updateClock, 1000);
   updateClock();
+  updatePremiumUI();
 }
 
 document.querySelectorAll('.promotion-btn').forEach(btn => {
@@ -206,7 +235,12 @@ document.querySelectorAll('.promotion-btn').forEach(btn => {
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    gameMode = btn.dataset.mode;
+    const mode = btn.dataset.mode;
+    if (!isModeAllowed(mode)) {
+      document.getElementById('premium-overlay').classList.add('visible');
+      return;
+    }
+    gameMode = mode;
     const input = document.getElementById('name-input');
     playerName = input.value.trim();
     document.getElementById('mode-overlay').className = 'hidden';
@@ -226,7 +260,43 @@ document.getElementById('controls-close').addEventListener('click', () => {
 });
 
 document.getElementById('theme-btn').addEventListener('click', () => {
-  renderer.cycleTheme();
+  renderer.cycleTheme(isPremium());
+});
+
+document.getElementById('premium-btn').addEventListener('click', () => {
+  document.getElementById('premium-overlay').classList.toggle('visible');
+});
+
+document.getElementById('premium-close').addEventListener('click', () => {
+  document.getElementById('premium-overlay').classList.remove('visible');
+});
+
+document.getElementById('premium-unlock-btn').addEventListener('click', () => {
+  window.open('https://buymeacoffee.com/dudz1308', '_blank');
+  const statusEl = document.getElementById('premium-status');
+  statusEl.textContent = 'After your purchase, enter the code you received above.';
+  statusEl.className = '';
+});
+
+document.getElementById('premium-activate-btn').addEventListener('click', () => {
+  const code = document.getElementById('premium-code-input').value.trim().toUpperCase();
+  const statusEl = document.getElementById('premium-status');
+  if (code.startsWith('CHESS3D-PRO-')) {
+    setPremium(true);
+    statusEl.textContent = 'Premium activated! Enjoy all features.';
+    statusEl.className = 'active';
+    document.getElementById('premium-btn').textContent = '★';
+    document.getElementById('premium-overlay').classList.remove('visible');
+  } else {
+    statusEl.textContent = 'Invalid code. Support at buymeacoffee.com/dudz1308';
+    statusEl.className = 'error';
+  }
+});
+
+document.getElementById('premium-code-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('premium-activate-btn').click();
+  }
 });
 
 init();

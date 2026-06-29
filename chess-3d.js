@@ -2,14 +2,18 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const THEMES = [
-  { name: 'Classic', light: 0xf0d9b5, dark: 0xb58863, bg: 0x1a1a2e },
-  { name: 'Emerald', light: 0xbddfb0, dark: 0x4a8c5c, bg: 0x0d1f0d },
-  { name: 'Ocean',  light: 0xb0d0e0, dark: 0x3a7a9a, bg: 0x0a1628 },
-  { name: 'Sunset', light: 0xf5d0a0, dark: 0xd4785a, bg: 0x2a1020 },
-  { name: 'Forest', light: 0xc8d8a0, dark: 0x5a7a3a, bg: 0x0f1a0a },
-  { name: 'Royal',  light: 0xe0d0f0, dark: 0x7a5a9a, bg: 0x1a1028 },
-  { name: 'Midnight', light: 0x8898a8, dark: 0x384858, bg: 0x050510 },
-  { name: 'Candy',  light: 0xf0d8e8, dark: 0xd07090, bg: 0x1a0810 },
+  { name: 'Classic', light: 0xf0d9b5, dark: 0xb58863, bg: 0x1a1a2e, premium: false },
+  { name: 'Emerald', light: 0xbddfb0, dark: 0x4a8c5c, bg: 0x0d1f0d, premium: false },
+  { name: 'Ocean',  light: 0xb0d0e0, dark: 0x3a7a9a, bg: 0x0a1628, premium: false },
+  { name: 'Sunset', light: 0xf5d0a0, dark: 0xd4785a, bg: 0x2a1020, premium: false },
+  { name: 'Forest', light: 0xc8d8a0, dark: 0x5a7a3a, bg: 0x0f1a0a, premium: true },
+  { name: 'Royal',  light: 0xe0d0f0, dark: 0x7a5a9a, bg: 0x1a1028, premium: true },
+  { name: 'Midnight', light: 0x8898a8, dark: 0x384858, bg: 0x050510, premium: true },
+  { name: 'Candy',  light: 0xf0d8e8, dark: 0xd07090, bg: 0x1a0810, premium: true },
+  { name: 'Gold',   light: 0xffeebb, dark: 0xcc9900, bg: 0x1a1200, premium: true },
+  { name: 'Amethyst', light: 0xddccee, dark: 0x8833aa, bg: 0x1a0020, premium: true },
+  { name: 'Ruby',   light: 0xeedddd, dark: 0xcc3344, bg: 0x200808, premium: true },
+  { name: 'Neon',   light: 0xccffcc, dark: 0x00ff88, bg: 0x001a0a, premium: true },
 ];
 const DEFAULT_THEME = THEMES[0];
 const LIGHT_SQUARE = DEFAULT_THEME.light;
@@ -44,6 +48,7 @@ export class Chess3DRenderer {
     this.cursorCol = 0;
     this.cursorMesh = null;
     this.currentTheme = 0;
+    this.allThemes = THEMES;
     this.lightMat = null;
     this.darkMat = null;
     this.groundMat = null;
@@ -896,8 +901,21 @@ export class Chess3DRenderer {
     document.body.style.background = '#' + theme.bg.toString(16).padStart(6, '0');
   }
 
-  cycleTheme() {
-    this.applyTheme((this.currentTheme + 1) % THEMES.length);
+  cycleTheme(premium) {
+    const available = premium ? THEMES : THEMES.filter(t => !t.premium);
+    if (available.length === 0) return;
+    const currentIdx = available.indexOf(THEMES[this.currentTheme]);
+    const next = available[(currentIdx + 1) % available.length];
+    const globalIdx = THEMES.indexOf(next);
+    if (globalIdx !== -1) this.applyTheme(globalIdx);
+  }
+
+  getThemeCount(premium) {
+    return premium ? THEMES.length : THEMES.filter(t => !t.premium).length;
+  }
+
+  isPremiumTheme(index) {
+    return THEMES[index]?.premium === true;
   }
 
   animate() {
